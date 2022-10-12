@@ -1,4 +1,6 @@
-import { MnemonicObj } from "../interfaces";
+/// <reference types="node" />
+import { BIP39Options, MnemonicObj } from "../interfaces";
+import { Keychain } from "./Keychain";
 export declare class BIP39Encoded {
     /**
      * The BIP39Encoded class will product a bip39 compliant mnemonic phrase in multiple formats
@@ -8,10 +10,15 @@ export declare class BIP39Encoded {
      */
     private words;
     mnemonic: MnemonicObj;
-    constructor(mnemonic?: string[] | undefined);
-    generate(length?: number): MnemonicObj;
+    seed: Buffer;
+    secret: string;
+    constructor(options?: BIP39Options);
+    generateMnemonic(options: BIP39Options): MnemonicObj;
+    generateSeed(secret?: string): Buffer;
     bin2hex(b: string): string;
     hex2bin(h: string): string;
-    decode(b58: string): MnemonicObj;
+    decodeb58(b58: string): MnemonicObj;
+    decodehex(hex: string): MnemonicObj;
     encode(mnemonic: string[]): MnemonicObj;
+    getKeychain(platform: string): Keychain;
 }

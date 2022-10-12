@@ -1,10 +1,36 @@
 "use strict";
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.BIP39Encoded = void 0;
 const bs58_1 = __importDefault(require("bs58"));
+const bip39 = __importStar(require("bip39"));
+const Keychain_1 = require("./Keychain");
+// @TODO - Add a prefix to b58 encodes for versioning
 const DEFAULT_MNEMONIC = {
     phonetic: [],
     binary: "",
@@ -13,8 +39,12 @@ const DEFAULT_MNEMONIC = {
     base58: "",
     hex: "",
 };
+const BIP39DefaultOptions = {
+    length: 12,
+    secret: "",
+};
 class BIP39Encoded {
-    constructor(mnemonic = undefined) {
+    constructor(options = BIP39DefaultOptions) {
         /**
          * The BIP39Encoded class will product a bip39 compliant mnemonic phrase in multiple formats
          * and facilitate format conversion.
@@ -2072,28 +2102,44 @@ class BIP39Encoded {
             "zoo",
         ];
         this.mnemonic = DEFAULT_MNEMONIC;
-        if (mnemonic) {
-            this.encode(mnemonic);
+        this.seed = Buffer.allocUnsafe(0);
+        this.secret = "";
+        //if a mnemonic is present, import it
+        if (options.mnemonic) {
+            //phonetic mnemonic
+            if (Array.isArray(options.mnemonic)) {
+                this.encode(options.mnemonic);
+                this.generateSeed(options.secret);
+                return;
+            }
+            //hex
+            else if (/^[0-9A-Fa-f]+$/.test(options.mnemonic) &&
+                options.mnemonic.length % 2 === 0) {
+                this.decodehex(options.mnemonic);
+                this.generateSeed(options.secret);
+                return;
+            }
+            //base58
+            else {
+                this.decodeb58(options.mnemonic);
+                this.generateSeed(options.secret);
+                return;
+            }
         }
-        else {
-            this.generate();
-        }
+        this.generateMnemonic(options);
+        this.generateSeed(options.secret);
     }
     //this is not currently safe for all lengths, but will work for the common ones (12, 24) because they
-    generate(length = 12) {
-        if (length % 2 !== 0 || length % 3 !== 0) {
+    generateMnemonic(options) {
+        if (!options.length) {
+            options.length = 12;
+        }
+        if (options.length % 2 !== 0 || options.length % 3 !== 0) {
             throw "Currently only supports short compression";
         }
-        const mnemonic = {
-            phonetic: [],
-            binary: "",
-            buffer: Buffer.allocUnsafe(length * 1.5),
-            indices: [],
-            base58: "",
-            hex: "",
-        };
+        const mnemonic = DEFAULT_MNEMONIC;
         const words = this.words;
-        for (let i = 0; i < length; i++) {
+        for (let i = 0; i < options.length; i++) {
             const idx = Math.floor(Math.random() * words.length);
             const idxBinaryString = idx.toString(2).padStart(12, "0");
             mnemonic.phonetic.push(words[idx]);
@@ -2104,7 +2150,12 @@ class BIP39Encoded {
         mnemonic.buffer = Buffer.from(mnemonic.hex, "hex");
         mnemonic.base58 = bs58_1.default.encode(mnemonic.buffer);
         this.mnemonic = mnemonic;
-        return mnemonic;
+        return this.mnemonic;
+    }
+    generateSeed(secret = "") {
+        this.secret = secret;
+        this.seed = bip39.mnemonicToSeedSync(this.mnemonic.phonetic.join(" "), this.secret);
+        return this.seed;
     }
     bin2hex(b) {
         return b.match(/.{4}/g).reduce(function (acc, i) {
@@ -2116,7 +2167,7 @@ class BIP39Encoded {
             return acc + ("000" + parseInt(i, 16).toString(2)).substr(-4, 4);
         }, "");
     }
-    decode(b58) {
+    decodeb58(b58) {
         const mnemonic = DEFAULT_MNEMONIC;
         mnemonic.buffer = Buffer.from(bs58_1.default.decode(b58));
         mnemonic.base58 = b58;
@@ -2132,7 +2183,25 @@ class BIP39Encoded {
             buffer = buffer.slice(12);
         }
         this.mnemonic = mnemonic;
-        return mnemonic;
+        return this.mnemonic;
+    }
+    decodehex(hex) {
+        const mnemonic = DEFAULT_MNEMONIC;
+        mnemonic.hex = hex;
+        mnemonic.buffer = Buffer.from(hex, "hex");
+        mnemonic.binary = this.hex2bin(hex);
+        mnemonic.base58 = bs58_1.default.encode(mnemonic.buffer);
+        let buffer = mnemonic.binary;
+        const words = this.words;
+        while (buffer.length >= 12) {
+            const binaryIdx = buffer.slice(0, 12).padStart(16);
+            const idxInt = parseInt(binaryIdx, 2);
+            mnemonic.indices.push(idxInt);
+            mnemonic.phonetic.push(words[idxInt]);
+            buffer = buffer.slice(12);
+        }
+        this.mnemonic = mnemonic;
+        return this.mnemonic;
     }
     encode(mnemonic) {
         const encodedMnemonic = DEFAULT_MNEMONIC;
@@ -2147,7 +2216,11 @@ class BIP39Encoded {
         encodedMnemonic.buffer = Buffer.from(encodedMnemonic.hex, "hex");
         encodedMnemonic.base58 = bs58_1.default.encode(encodedMnemonic.buffer);
         this.mnemonic = encodedMnemonic;
-        return encodedMnemonic;
+        return this.mnemonic;
+    }
+    getKeychain(platform) {
+        const keychain = new Keychain_1.Keychain(platform, this.seed);
+        return keychain;
     }
 }
 exports.BIP39Encoded = BIP39Encoded;

@@ -1,5 +1,7 @@
 import bs58 from "bs58";
-import { MnemonicObj } from "../interfaces";
+import { BIP39Options, MnemonicObj } from "../interfaces";
+import * as bip39 from "bip39";
+import {Keychain} from "./Keychain";
 
 // @TODO - Add a prefix to b58 encodes for versioning
 
@@ -10,6 +12,11 @@ const DEFAULT_MNEMONIC: MnemonicObj = {
   indices: [],
   base58: "",
   hex: "",
+};
+
+const BIP39DefaultOptions: BIP39Options = {
+  length: 12,
+  secret: "",
 };
 
 export class BIP39Encoded {
@@ -2071,30 +2078,50 @@ export class BIP39Encoded {
     "zoo",
   ];
   public mnemonic: MnemonicObj = DEFAULT_MNEMONIC;
+  public seed: Buffer = Buffer.allocUnsafe(0);
+  public secret: string = "";
 
-  constructor(mnemonic: string[] | undefined = undefined) {
-    if (mnemonic) {
-      this.encode(mnemonic);
-    } else {
-      this.generate();
+  constructor(options: BIP39Options = BIP39DefaultOptions) {
+    //if a mnemonic is present, import it
+    if (options.mnemonic) {
+      //phonetic mnemonic
+      if (Array.isArray(options.mnemonic)) {
+        this.encode(options.mnemonic);
+        this.generateSeed(options.secret);
+        return;
+      }
+      //hex
+      else if (
+        /^[0-9A-Fa-f]+$/.test(options.mnemonic) &&
+        options.mnemonic.length % 2 === 0
+      ) {
+        this.decodehex(options.mnemonic);
+        this.generateSeed(options.secret);
+        return;
+      }
+      //base58
+      else {
+        this.decodeb58(options.mnemonic);
+        this.generateSeed(options.secret);
+        return;
+      }
     }
+    this.generateMnemonic(options);
+    this.generateSeed(options.secret);
   }
 
   //this is not currently safe for all lengths, but will work for the common ones (12, 24) because they
-  generate(length: number = 12) {
-    if (length % 2 !== 0 || length % 3 !== 0) {
+  generateMnemonic(options: BIP39Options) {
+    if (!options.length) {
+      options.length = 12;
+    }
+
+    if (options.length % 2 !== 0 || options.length % 3 !== 0) {
       throw "Currently only supports short compression";
     }
-    const mnemonic: MnemonicObj = {
-      phonetic: [],
-      binary: "",
-      buffer: Buffer.allocUnsafe(length * 1.5),
-      indices: [],
-      base58: "",
-      hex: "",
-    };
+    const mnemonic: MnemonicObj = DEFAULT_MNEMONIC;
     const words = this.words;
-    for (let i = 0; i < length; i++) {
+    for (let i = 0; i < options.length; i++) {
       const idx = Math.floor(Math.random() * words.length);
       const idxBinaryString = idx.toString(2).padStart(12, "0");
       mnemonic.phonetic.push(words[idx]);
@@ -2107,7 +2134,16 @@ export class BIP39Encoded {
     mnemonic.base58 = bs58.encode(mnemonic.buffer);
 
     this.mnemonic = mnemonic;
-    return mnemonic;
+    return this.mnemonic;
+  }
+
+  generateSeed(secret: string = ""): Buffer {
+    this.secret = secret;
+    this.seed = bip39.mnemonicToSeedSync(
+      this.mnemonic.phonetic.join(" "),
+      this.secret
+    );
+    return this.seed;
   }
 
   bin2hex(b: string): string {
@@ -2122,7 +2158,7 @@ export class BIP39Encoded {
     }, "");
   }
 
-  decode(b58: string): MnemonicObj {
+  decodeb58(b58: string): MnemonicObj {
     const mnemonic: MnemonicObj = DEFAULT_MNEMONIC;
     mnemonic.buffer = Buffer.from(bs58.decode(b58));
     mnemonic.base58 = b58;
@@ -2141,7 +2177,28 @@ export class BIP39Encoded {
       buffer = buffer.slice(12);
     }
     this.mnemonic = mnemonic;
-    return mnemonic;
+    return this.mnemonic;
+  }
+
+  decodehex(hex: string): MnemonicObj {
+    const mnemonic: MnemonicObj = DEFAULT_MNEMONIC;
+    mnemonic.hex = hex;
+    mnemonic.buffer = Buffer.from(hex, "hex");
+    mnemonic.binary = this.hex2bin(hex);
+    mnemonic.base58 = bs58.encode(mnemonic.buffer);
+
+    let buffer = mnemonic.binary;
+    const words = this.words;
+    while (buffer.length >= 12) {
+      const binaryIdx = buffer.slice(0, 12).padStart(16);
+      const idxInt = parseInt(binaryIdx, 2);
+      mnemonic.indices.push(idxInt);
+      mnemonic.phonetic.push(words[idxInt]);
+
+      buffer = buffer.slice(12);
+    }
+    this.mnemonic = mnemonic;
+    return this.mnemonic;
   }
 
   encode(mnemonic: string[]): MnemonicObj {
@@ -2160,6 +2217,11 @@ export class BIP39Encoded {
     encodedMnemonic.base58 = bs58.encode(encodedMnemonic.buffer);
 
     this.mnemonic = encodedMnemonic;
-    return encodedMnemonic;
+    return this.mnemonic;
+  }
+
+  getKeychain(platform: string): Keychain {
+    const keychain = new Keychain(platform, this.seed)
+    return keychain
   }
 }
