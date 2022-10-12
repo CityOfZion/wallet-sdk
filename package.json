@@ -1,0 +1,29 @@
+{
+  "name": "@cityofzion/wallet-sdk",
+  "version": "0.0.1",
+  "description": "A bip-39 wallet sdk supporting many formats and curves",
+  "license": "GPL",
+  "author": "COZ, Inc.",
+  "main": "dist/index",
+  "types": "dist/index",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/CityOfZion/wallet-sdk.git"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build": "tsc",
+    "fmt": "prettier --write ./src/**/*.ts"
+  },
+  "dependencies": {
+    "bs58": "^5.0.0",
+    "typescript": "^4.8.4"
+  },
+  "devDependencies": {
+    "@types/node": "^18.8.4",
+    "mocha": "^10.0.0",
+    "prettier": "^2.7.1"
+  }
+}
