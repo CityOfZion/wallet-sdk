@@ -1,6 +1,8 @@
 import bs58 from "bs58";
 import { MnemonicObj } from "../interfaces";
 
+// @TODO - Add a prefix to b58 encodes for versioning
+
 const DEFAULT_MNEMONIC: MnemonicObj = {
   phonetic: [],
   binary: "",
