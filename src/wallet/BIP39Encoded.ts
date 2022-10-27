@@ -2,18 +2,8 @@ import bs58 from "bs58";
 import { BIP39Options, MnemonicObj } from "../interfaces";
 import * as bip39 from "bip39";
 import { Keychain } from "./Keychain";
-import { Buffer } from "buffer";
 
 // @TODO - Add a prefix to b58 encodes for versioning
-
-const DEFAULT_MNEMONIC: MnemonicObj = {
-  phonetic: [],
-  binary: "",
-  buffer: Buffer.allocUnsafe(0),
-  indices: [],
-  base58: "",
-  hex: "",
-};
 
 const BIP39DefaultOptions: BIP39Options = {
   length: 12,
@@ -2078,7 +2068,7 @@ export class BIP39Encoded {
     "zone",
     "zoo",
   ];
-  public mnemonic: MnemonicObj = DEFAULT_MNEMONIC;
+  public mnemonic: MnemonicObj = BIP39Encoded.getDefaultMnemonic();
   public seed: Buffer = Buffer.allocUnsafe(0);
   public secret: string = "";
 
@@ -2120,7 +2110,7 @@ export class BIP39Encoded {
     if (options.length % 2 !== 0 || options.length % 3 !== 0) {
       throw "Currently only supports short compression";
     }
-    const mnemonic: MnemonicObj = DEFAULT_MNEMONIC;
+    const mnemonic: MnemonicObj = BIP39Encoded.getDefaultMnemonic();
     const words = this.words;
     for (let i = 0; i < options.length; i++) {
       const idx = Math.floor(Math.random() * words.length);
@@ -2160,7 +2150,7 @@ export class BIP39Encoded {
   }
 
   decodeb58(b58: string): MnemonicObj {
-    const mnemonic: MnemonicObj = DEFAULT_MNEMONIC;
+    const mnemonic: MnemonicObj = BIP39Encoded.getDefaultMnemonic();
     mnemonic.buffer = Buffer.from(bs58.decode(b58));
     mnemonic.base58 = b58;
 
@@ -2182,7 +2172,7 @@ export class BIP39Encoded {
   }
 
   decodehex(hex: string): MnemonicObj {
-    const mnemonic: MnemonicObj = DEFAULT_MNEMONIC;
+    const mnemonic: MnemonicObj = BIP39Encoded.getDefaultMnemonic();
     mnemonic.hex = hex;
     mnemonic.buffer = Buffer.from(hex, "hex");
     mnemonic.binary = this.hex2bin(hex);
@@ -2203,7 +2193,7 @@ export class BIP39Encoded {
   }
 
   encode(mnemonic: string[]): MnemonicObj {
-    const encodedMnemonic: MnemonicObj = DEFAULT_MNEMONIC;
+    const encodedMnemonic: MnemonicObj = BIP39Encoded.getDefaultMnemonic();
     encodedMnemonic.phonetic = mnemonic;
 
     mnemonic.forEach((word) => {
@@ -2224,5 +2214,16 @@ export class BIP39Encoded {
   getKeychain(platform: string): Keychain {
     const keychain = new Keychain(platform, this.seed);
     return keychain;
+  }
+
+  static getDefaultMnemonic(): MnemonicObj {
+    return {
+      phonetic: [],
+      binary: "",
+      buffer: Buffer.allocUnsafe(0),
+      indices: [],
+      base58: "",
+      hex: "",
+    };
   }
 }

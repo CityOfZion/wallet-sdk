@@ -1,7 +1,6 @@
 import bs58 from "bs58";
 import { KeyFields } from "../interfaces";
 import crypto from "crypto";
-import { Buffer } from "buffer";
 
 export class Key {
   f: KeyFields;

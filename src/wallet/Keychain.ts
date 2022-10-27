@@ -2,7 +2,6 @@ import { bip32Accounts, bip32MasterSeeds, curves } from "../constants";
 import { Key } from "./Key";
 import BN from "bignumber.js";
 import crypto from "crypto";
-import { Buffer } from "buffer";
 
 export class Keychain {
   public platform: string;
