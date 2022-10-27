@@ -1,6 +1,6 @@
 {
   "name": "@cityofzion/wallet-sdk",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "A bip-39 wallet sdk supporting many formats and curves",
   "license": "GPL",
   "author": "COZ, Inc.",

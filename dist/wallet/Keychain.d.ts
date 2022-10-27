@@ -1,5 +1,6 @@
 /// <reference types="node" />
 import { Key } from "./Key";
+import { Buffer } from "buffer";
 export declare class Keychain {
     platform: string;
     private seed;

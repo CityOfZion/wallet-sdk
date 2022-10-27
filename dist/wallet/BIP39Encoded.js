@@ -30,11 +30,12 @@ exports.BIP39Encoded = void 0;
 const bs58_1 = __importDefault(require("bs58"));
 const bip39 = __importStar(require("bip39"));
 const Keychain_1 = require("./Keychain");
+const buffer_1 = require("buffer");
 // @TODO - Add a prefix to b58 encodes for versioning
 const DEFAULT_MNEMONIC = {
     phonetic: [],
     binary: "",
-    buffer: Buffer.allocUnsafe(0),
+    buffer: buffer_1.Buffer.allocUnsafe(0),
     indices: [],
     base58: "",
     hex: "",
@@ -2102,7 +2103,7 @@ class BIP39Encoded {
             "zoo",
         ];
         this.mnemonic = DEFAULT_MNEMONIC;
-        this.seed = Buffer.allocUnsafe(0);
+        this.seed = buffer_1.Buffer.allocUnsafe(0);
         this.secret = "";
         //if a mnemonic is present, import it
         if (options.mnemonic) {
@@ -2147,7 +2148,7 @@ class BIP39Encoded {
             mnemonic.binary += idxBinaryString;
         }
         mnemonic.hex = this.bin2hex(mnemonic.binary);
-        mnemonic.buffer = Buffer.from(mnemonic.hex, "hex");
+        mnemonic.buffer = buffer_1.Buffer.from(mnemonic.hex, "hex");
         mnemonic.base58 = bs58_1.default.encode(mnemonic.buffer);
         this.mnemonic = mnemonic;
         return this.mnemonic;
@@ -2169,7 +2170,7 @@ class BIP39Encoded {
     }
     decodeb58(b58) {
         const mnemonic = DEFAULT_MNEMONIC;
-        mnemonic.buffer = Buffer.from(bs58_1.default.decode(b58));
+        mnemonic.buffer = buffer_1.Buffer.from(bs58_1.default.decode(b58));
         mnemonic.base58 = b58;
         mnemonic.hex = mnemonic.buffer.toString("hex");
         mnemonic.binary = this.hex2bin(mnemonic.hex);
@@ -2188,7 +2189,7 @@ class BIP39Encoded {
     decodehex(hex) {
         const mnemonic = DEFAULT_MNEMONIC;
         mnemonic.hex = hex;
-        mnemonic.buffer = Buffer.from(hex, "hex");
+        mnemonic.buffer = buffer_1.Buffer.from(hex, "hex");
         mnemonic.binary = this.hex2bin(hex);
         mnemonic.base58 = bs58_1.default.encode(mnemonic.buffer);
         let buffer = mnemonic.binary;
@@ -2213,7 +2214,7 @@ class BIP39Encoded {
             encodedMnemonic.binary += idxBinaryString;
         });
         encodedMnemonic.hex = this.bin2hex(encodedMnemonic.binary);
-        encodedMnemonic.buffer = Buffer.from(encodedMnemonic.hex, "hex");
+        encodedMnemonic.buffer = buffer_1.Buffer.from(encodedMnemonic.hex, "hex");
         encodedMnemonic.base58 = bs58_1.default.encode(encodedMnemonic.buffer);
         this.mnemonic = encodedMnemonic;
         return this.mnemonic;

@@ -1,6 +1,7 @@
 /// <reference types="node" />
 import { BIP39Options, MnemonicObj } from "../interfaces";
 import { Keychain } from "./Keychain";
+import { Buffer } from "buffer";
 export declare class BIP39Encoded {
     /**
      * The BIP39Encoded class will product a bip39 compliant mnemonic phrase in multiple formats
