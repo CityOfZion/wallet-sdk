@@ -8,7 +8,6 @@ const constants_1 = require("../constants");
 const Key_1 = require("./Key");
 const bignumber_js_1 = __importDefault(require("bignumber.js"));
 const crypto_1 = __importDefault(require("crypto"));
-const buffer_1 = require("buffer");
 class Keychain {
     constructor(platform, seed) {
         if (!(platform in constants_1.bip32MasterSeeds)) {
@@ -54,7 +53,7 @@ class Keychain {
             childNumber: 0,
             chainCode: hmac.slice(32, hmac.length),
             key: hmac.slice(0, 32),
-            fingerprint: buffer_1.Buffer.from((0x0).toString(16)),
+            fingerprint: Buffer.from((0x0).toString(16)),
             depth: 0,
             isPrivate: true,
         });
@@ -64,14 +63,14 @@ class Keychain {
         const hardenedChild = childIdx >= constants_1.bip32Accounts.firstHardenedChild;
         let data;
         if (hardenedChild) {
-            data = buffer_1.Buffer.concat([buffer_1.Buffer.from("00", "hex"), parentKey.f.key]);
+            data = Buffer.concat([Buffer.from("00", "hex"), parentKey.f.key]);
         }
         else {
             const pk = curve.keyFromPrivate(parentKey.f.key, "hex");
-            data = buffer_1.Buffer.from(pk.getPublic().encodeCompressed());
+            data = Buffer.from(pk.getPublic().encodeCompressed());
         }
-        const childIdBuffer = buffer_1.Buffer.from(childIdx.toString(16).padStart(8, "0"), "hex");
-        data = buffer_1.Buffer.concat([data, childIdBuffer]);
+        const childIdBuffer = Buffer.from(childIdx.toString(16).padStart(8, "0"), "hex");
+        data = Buffer.concat([data, childIdBuffer]);
         const intermediary = crypto_1.default
             .createHmac("sha512", parentKey.f.chainCode)
             .update(data)
@@ -82,7 +81,7 @@ class Keychain {
             const k2 = new bignumber_js_1.default(parentKey.f.key.toString("hex"), 16);
             const c = new bignumber_js_1.default(curve.n);
             const protoKey = k1.plus(k2).mod(c).toString(16);
-            newKey = buffer_1.Buffer.from(protoKey.padStart(64, "0"), "hex");
+            newKey = Buffer.from(protoKey.padStart(64, "0"), "hex");
         }
         else {
             throw new Error("only private keys are supported for keygen");

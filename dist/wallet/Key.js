@@ -6,20 +6,19 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.Key = void 0;
 const bs58_1 = __importDefault(require("bs58"));
 const crypto_1 = __importDefault(require("crypto"));
-const buffer_1 = require("buffer");
 class Key {
     constructor(fields) {
         this.f = fields;
     }
     getWIF() {
-        const wif = buffer_1.Buffer.concat([
-            buffer_1.Buffer.from("80", "hex"),
+        const wif = Buffer.concat([
+            Buffer.from("80", "hex"),
             this.f.key,
-            buffer_1.Buffer.from("01", "hex"),
+            Buffer.from("01", "hex"),
         ]);
         const sha256H = crypto_1.default.createHash("sha256").update(wif).digest();
         const sha256H2 = crypto_1.default.createHash("sha256").update(sha256H).digest();
-        return bs58_1.default.encode(buffer_1.Buffer.concat([wif, sha256H2.slice(0, 4)]));
+        return bs58_1.default.encode(Buffer.concat([wif, sha256H2.slice(0, 4)]));
     }
 }
 exports.Key = Key;
