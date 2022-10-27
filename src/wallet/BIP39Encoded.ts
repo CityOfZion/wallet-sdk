@@ -1,8 +1,7 @@
 import bs58 from "bs58";
 import { BIP39Options, MnemonicObj } from "../interfaces";
 import * as bip39 from "bip39";
-import { Keychain } from "./Keychain";
-import { Buffer } from "buffer";
+import {Keychain} from "./Keychain";
 
 // @TODO - Add a prefix to b58 encodes for versioning
 
@@ -2222,7 +2221,7 @@ export class BIP39Encoded {
   }
 
   getKeychain(platform: string): Keychain {
-    const keychain = new Keychain(platform, this.seed);
-    return keychain;
+    const keychain = new Keychain(platform, this.seed)
+    return keychain
   }
 }
